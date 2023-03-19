@@ -23,7 +23,10 @@ int main(void)
     int matrix_size = 3;
     int **matrix = (int **)malloc(matrix_size * sizeof(int *));
     float **minors_matrix = (float **)malloc(matrix_size * sizeof(float *));
-    
+    float **cofactors = (float **)malloc(matrix_size * sizeof(float *));
+    float **transpose_matrix = (float **)malloc(matrix_size * sizeof(float *));
+    float **test = (float **)malloc(matrix_size * sizeof(float *));
+
     dynamically_allocate_memory(matrix, matrix_size);
 
     int a;

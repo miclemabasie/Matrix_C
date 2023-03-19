@@ -26,7 +26,8 @@ int main(void)
     float **minors_matrix = (float **)malloc(matrix_size * sizeof(float *));
     float **cofactors = (float **)malloc(matrix_size * sizeof(float *));
     float **transpose_matrix = (float **)malloc(matrix_size * sizeof(float *));
-    
+    float **test = (float **)malloc(matrix_size * sizeof(float *));
+
     dynamically_allocate_memory(matrix, matrix_size);
 
     for (int r = 0; r < matrix_size; r++)
@@ -69,6 +70,13 @@ int main(void)
     //     }
     //     printf("\n");
     // }
+     printf("\t -> 2 To find the DETERMINANT of the matrix\n");
+        printf("\t -> 3 To find the INVERSE of the matrix\n");
+        printf("\t -> 4 To find the MINORS of the matrix\n");
+        printf("\t -> 5 To find the COFACTORS of the matrix\n");
+        printf("\t -> 6 to find TRANSPOSE of the matrix.\n");
+        printf("\t -> 7 Show the current matrix.\n");
+        printf("\t -> 0 To Quit the program!\n");
     show_matrix(matrix, matrix_size);
 
     set_minors(0, 0, matrix, minors_matrix, matrix_size);
@@ -184,3 +192,31 @@ void calculate_transpose(float **in_matrix, float **transpose_matrix, int matrix
         printf("\n");
     }
 }
+
+void set_all_minors(int **matrix, int **minors_matrix, int matrix_size)
+{
+    set_minors(0, 0, matrix, minors_matrix, matrix_size);
+    set_minors(0, 1, matrix, minors_matrix, matrix_size);
+    set_minors(0, 2, matrix, minors_matrix, matrix_size);
+
+    set_minors(1, 0, matrix, minors_matrix, matrix_size);
+    set_minors(1, 1, matrix, minors_matrix, matrix_size);
+    set_minors(1, 2, matrix, minors_matrix, matrix_size);
+
+    set_minors(2, 0, matrix, minors_matrix, matrix_size);
+    set_minors(2, 1, matrix, minors_matrix, matrix_size);
+    system("clear");
+    set_minors(2, 2, matrix, minors_matrix, matrix_size);
+}
+
+// void calculate_inverse(float **adjoint_matrix, float **inverse_matrix, double determinant, int matrix_size)
+// {
+//     for(int i = 0; i < matrix_size; i++)
+//     {
+//         for(int j = 0; j < matrix_size; j++)
+//         {
+//             inverse_matrix[i][j] = adjoint_matrix[i][j] * determinant;
+//         }
+//     }
+//     show_matrix_float(inverse_matrix, matrix_size, "INVERSE MATRIX");
+// }

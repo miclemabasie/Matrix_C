@@ -7,15 +7,18 @@ int data2[4];
 int data3[4];
 int data4[4];
 double determinant = 0;
-// int *p_determinant = &determinant;
+// Create a variable to check if there is currently a valid matrix
+int valid_matrix = 0;
+int running = 1;
+
 
 // FUNCTIONS
 void display_intro_text();
 int create_matrix_type();
 void create_matrix(int **matrix, int matrix_size, int *valide_matrix);
 int program_choices();
-void show_matrix(int matrix_size, int **matrix);
-void show_matrix_float(int matrix_size, float **matrix);
+void show_matrix(int **matrix, int matrix_size, char message[100]);
+void show_matrix_float(float **matrix, int matrix_size, char message[100]);
 void dynamically_allocate_memory(int **matrix, int matrix_size);
 void dynamic_float_memory_allocation(float **matrix, int matrix_size);
 void calculate_determinant(int matrix_size, int **matrix, double *res);
@@ -24,27 +27,15 @@ int calculate_sub_determinant(int **matrix, int index_holder);
 void show_about(void);
 
 
+// Inverse related functions
+void set_minors(int x, int y, int **matrix, float **minors_matrix, int matrix_size);
+void dynamically_allocate_memory(int **matrix, int matrix_size);
+void calculate_cofactors(float **in_matrix, float **out_matrix, int standard_singn_matrix[3][3], int matrix_size);
+void calculate_transpose(float **in_matrix, float **transpose_matrix, int matrix_size);
+void set_all_minors(int **matrix, float **minors_matrix, int matrix_size);
+void calculate_inverse(float **adjoint_matrix, float **inverse_matrix, double determinant, int matrix_size);
 
 
-void dynamically_allocate_memory(int **matrix, int matrix_size)
-{
-    for (int r = 0; r < matrix_size; r++)
-    {
-        matrix[r] = (int *)malloc(matrix_size * sizeof(int));
-    }
-}
-
-void dynamic_float_memory_allocation(float **matrix, int matrix_size)
-{
-    for (int r = 0; r < matrix_size; r++)
-    {
-        matrix[r] = (float *)malloc(matrix_size * sizeof(float));
-    }  
-}
-
-// Create a variable to check if there is currently a valid matrix
-int valid_matrix = 0;
-int running = 1;
 int main(void)
 {
     /*Explain to the user how the program works*/
@@ -55,12 +46,26 @@ int main(void)
 
     // Dynamically create an array of pointers of size (matrix size)
     int **matrix = (int **)malloc(matrix_size * sizeof(int *));
+    dynamically_allocate_memory(matrix, matrix_size);
 
-    // Dynamically allocate memory of size (matrix size) to each row
-    for (int r = 0; r < matrix_size; r++)
-    {
-        matrix[r] = (int *)malloc(matrix_size * sizeof(int));
-    }
+        
+    float **minors_matrix = (float **)malloc(matrix_size * sizeof(float *));
+    float **cofactors = (float **)malloc(matrix_size * sizeof(float *));
+    float **ajoint_matrix = (float **)malloc(matrix_size * sizeof(float *));
+    // float **test = (float **)malloc(matrix_size * sizeof(float *));
+    
+    dynamic_float_memory_allocation(minors_matrix, matrix_size);
+    dynamic_float_memory_allocation(cofactors, matrix_size);
+    dynamic_float_memory_allocation(ajoint_matrix, matrix_size);
+    // dynamic_float_memory_allocation(test, matrix_size);
+
+    // float **inverse_matrix = (float **)malloc(matrix_size * sizeof(float *));
+    // dynamic_float_memory_allocation(inverse_matrix, matrix_size);
+
+    int singed_matrix[3][3] = {
+        {1, -1, 1}, {-1, 1, -1}, {1, -1, 1}
+    };
+
     while (running)
     {   
         
@@ -72,7 +77,7 @@ int main(void)
             int i;
             matrix_size = create_matrix_type();   
             create_matrix(matrix, matrix_size, &valid_matrix);
-            show_matrix(matrix_size, matrix);
+            show_matrix(matrix, matrix_size, "Original Matrix");
             printf("Press 1 to continue: ");
             scanf("%d", &i);
             }else {
@@ -85,31 +90,50 @@ int main(void)
             calculate_determinant(matrix_size, matrix, &determinant);
             printf("Press 1 to continue: ");
             scanf("%d", &i);
-        } else if(choice == 0)
+        }
+        else if(choice == 3)
+        {
+            if(valid_matrix)
+            {
+                calculate_determinant(matrix_size, matrix, &determinant);
+                set_all_minors(matrix, minors_matrix, matrix_size);
+                calculate_cofactors(minors_matrix, cofactors, singed_matrix, matrix_size);
+                calculate_transpose(cofactors, ajoint_matrix, matrix_size);
+                calculate_inverse(ajoint_matrix, cofactors, determinant, matrix_size);
+            }
+        }
+        else if(choice == 4){
+            set_all_minors(matrix, minors_matrix, matrix_size);
+        }else if(choice == 5){
+            set_all_minors(matrix, minors_matrix, matrix_size);
+            calculate_cofactors(minors_matrix, cofactors, singed_matrix, matrix_size);
+        }else if(choice == 6){
+            set_all_minors(matrix, minors_matrix, matrix_size);
+            calculate_cofactors(minors_matrix, cofactors, singed_matrix, matrix_size);
+            calculate_transpose(cofactors, ajoint_matrix, matrix_size);
+        }
+         else if(choice == 0)
         {
             printf("Exiting the program...\n");
             running = 0;
-        }else if(choice == 6)
+        }else if(choice == 7)
         {
             if(!valid_matrix)
             {
                 printf("Can't show matrix, No valid matrix created yet!\n");
             }else {
-                show_matrix(matrix_size, matrix);
+                show_matrix(matrix, matrix_size, "Original Matrix");
             }
-        }else if(choice == 7){
+        }else if(choice == 8){
             system("clear");
             show_about();
             printf("\n");
-        }else if(choice == 3)
-        {
-            if(valid_matrix)
-            {
-                calculate_determinant(matrix_size, matrix, &determinant);
-                printf("We are trying the find the inverse of your matrix %.3lf", determinant);
-            }
         }
     }
+    free(minors_matrix);
+    free(cofactors);
+    free(ajoint_matrix);
+
     return 0;
 }
 
@@ -126,16 +150,17 @@ int program_choices()
     if(!valid_matrix)
     {
         printf("\t -> 1 Enter a new matrix\n");
-        printf("\t -> 7 About the program.\n");
+        printf("\t -> 8 About the program.\n");
         printf("\t -> 0 To Quit the program!\n");
     }
     else
     {
-        printf("\t -> 2 To find the determinant of the matrix\n");
-        printf("\t -> 3 To find the inverse of the matrix\n");
-        printf("\t -> 4 To find the minors of the matrix\n");
-        printf("\t -> 5 To find the cofactors of the matrix\n");
-        printf("\t -> 6 Show the current matrix.\n");
+        printf("\t -> 2 To find the DETERMINANT of the matrix\n");
+        printf("\t -> 3 To find the INVERSE of the matrix\n");
+        printf("\t -> 4 To find the MINORS of the matrix\n");
+        printf("\t -> 5 To find the COFACTORS of the matrix\n");
+        printf("\t -> 6 to find TRANSPOSE of the matrix.\n");
+        printf("\t -> 7 Show the current matrix.\n");
         printf("\t -> 0 To Quit the program!\n");
     }
     scanf("%d", &choice);
@@ -188,9 +213,10 @@ void create_matrix(int **matrix, int matrix_size, int *valid_matrix)
 }
 
 
-void show_matrix(int matrix_size, int **matrix)
+void show_matrix(int **matrix, int matrix_size, char message[100])
 {
     // Display the matrix to the user
+    printf("%s\n", message);
     int j;
     for(int i = 0; i < matrix_size; i++)
     {
@@ -204,15 +230,16 @@ void show_matrix(int matrix_size, int **matrix)
 }
 
 
-void show_matrix_float(int matrix_size, float **matrix)
+void show_matrix_float(float **matrix, int matrix_size, char message[100])
 {
     // Display the matrix to the user
+    printf("%s\n", message);
     int j;
     for(int i = 0; i < matrix_size; i++)
     {
         for(int j = 0; j < matrix_size; j++)
         {
-            printf("%d  ", matrix[i][j]);
+            printf("%.2f  ", matrix[i][j]);
         }
         printf("\n");
     }
@@ -286,12 +313,12 @@ void calculate_determinant(int matrix_size, int **matrix, double *res)
         set_determinant_matrix_data(matrix_daterminant_data2, data2);
         set_determinant_matrix_data(matrix_daterminant_data3, data3);
         printf("################## RSULTS FOR DETERMINANT ##################\n");
-        show_matrix(2, matrix_daterminant_data1);
+        show_matrix(matrix_daterminant_data1, 2, "Sub Determnat Calculation");
         // Perform determnant calculations on each 2 x 2 det that was created above
         a = calculate_sub_determinant(matrix_daterminant_data1, matrix[0][0]);
-        show_matrix(2, matrix_daterminant_data2);
+        show_matrix(matrix_daterminant_data2, 2, "Sub Determnat Calculation");
         b = calculate_sub_determinant(matrix_daterminant_data2, matrix[0][1]);
-        show_matrix(2, matrix_daterminant_data3);
+        show_matrix(matrix_daterminant_data3, 2, "Sub Determnat Calculation");
         c = calculate_sub_determinant(matrix_daterminant_data3, matrix[0][2]);
         // Perform the calculation of the final determinant value
         double result = a - b + c;
@@ -370,3 +397,104 @@ void normal_show(int *matrix)
         printf("\n");
     }
 }
+
+void dynamically_allocate_memory(int **matrix, int matrix_size)
+{
+    for (int r = 0; r < matrix_size; r++)
+    {
+        matrix[r] = (int *)malloc(matrix_size * sizeof(int));
+    }
+}
+
+void dynamic_float_memory_allocation(float **matrix, int matrix_size)
+{
+    for (int r = 0; r < matrix_size; r++)
+    {
+        matrix[r] = (float *)malloc(matrix_size * sizeof(float));
+    }  
+}
+
+void set_minors(int x, int y, int **matrix, float **minors_matrix, int matrix_size)
+{
+    int valid_data[4];
+    int tem_index = 0;
+    int is_valid = 0;
+    for(int i = 0; i < matrix_size; i++)
+    {
+        for(int j = 0; j < matrix_size; j++)
+        {
+            if(i != x)
+            {
+                if(j != y)
+                {
+                    is_valid = 1;
+                 valid_data[tem_index] = matrix[i][j];
+                    tem_index++;
+                }
+            }
+        }
+    }
+    // update minors_matrix using tem_selected_data to their respective indexs
+    float res = 0;
+    res = (valid_data[0] * valid_data[3]) - (valid_data[1] * valid_data[2]);
+    minors_matrix[x][y] = res;
+    show_matrix_float(minors_matrix, matrix_size, "Minors Matrix");
+}
+
+// find the cofactors of a given matrix
+
+void calculate_cofactors(float **in_matrix, float **out_matrix, int standard_singn_matrix[3][3], int matrix_size)
+{
+    for(int i = 0; i < matrix_size; i++)
+    {
+        for(int j = 0; j < matrix_size; j++)
+        {
+            out_matrix[i][j] = in_matrix[i][j] * standard_singn_matrix[i][j];
+        }
+    }
+    show_matrix_float(out_matrix, matrix_size, "Cofactors");
+
+}
+
+
+void calculate_transpose(float **in_matrix, float **transpose_matrix, int matrix_size)
+{
+    for(int i = 0; i < matrix_size; i++)
+    {
+        for(int j = 0; j < matrix_size; j++)
+        {
+            transpose_matrix[i][j] = in_matrix[j][i];
+        }
+    }
+    show_matrix_float(transpose_matrix, matrix_size, "Transpose Matrix");
+}
+
+void set_all_minors(int **matrix, float **minors_matrix, int matrix_size)
+{
+    set_minors(0, 0, matrix, minors_matrix, matrix_size);
+    set_minors(0, 1, matrix, minors_matrix, matrix_size);
+    set_minors(0, 2, matrix, minors_matrix, matrix_size);
+
+    set_minors(1, 0, matrix, minors_matrix, matrix_size);
+    set_minors(1, 1, matrix, minors_matrix, matrix_size);
+    set_minors(1, 2, matrix, minors_matrix, matrix_size);
+
+    set_minors(2, 0, matrix, minors_matrix, matrix_size);
+    set_minors(2, 1, matrix, minors_matrix, matrix_size);
+    system("clear");
+    set_minors(2, 2, matrix, minors_matrix, matrix_size);
+}
+
+
+void calculate_inverse(float **adjoint_matrix, float **inverse_matrix, double determinant, int matrix_size)
+{
+    for(int i = 0; i < matrix_size; i++)
+    {
+        for(int j = 0; j < matrix_size; j++)
+        {
+            inverse_matrix[i][j] = adjoint_matrix[i][j] * (1 / determinant);
+        }
+    }
+    show_matrix_float(inverse_matrix, matrix_size, "INVERSE MATRIX");
+}
+
